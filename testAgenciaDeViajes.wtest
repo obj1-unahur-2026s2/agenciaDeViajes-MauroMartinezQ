@@ -1,0 +1,103 @@
+import agenciaDeViajes.*
+
+describe "Sistema de Gestión de Packs de Viajes"{
+  
+  const guiaMotivado = new Coordinador(cantViajesRealizados = 21, estaMotivado = true, añosExperiencia = 2, rol = guia)
+  const asistenteSinExp = new Coordinador(cantViajesRealizados = 25, estaMotivado = true, añosExperiencia = 2, rol = asistenteLogistico)
+  const acompananteExp = new Coordinador(cantViajesRealizados = 21, estaMotivado = false, añosExperiencia = 1, rol = acompañante)
+
+  const traslado = new BeneficioEspecial(tipoBeneficio = "Traslados privados", costoBeneficio = 5000, estaVigente = true)
+  const salaVip = new BeneficioEspecial(tipoBeneficio = "Acceso a salas VIP", costoBeneficio = 10000, estaVigente = true)
+  const seguroVencido = new BeneficioEspecial(tipoBeneficio = "Seguros adicionales", costoBeneficio = 3000, estaVigente = false)
+  const seguroVigente = new BeneficioEspecial(tipoBeneficio = "Seguros adicionales", costoBeneficio = 4000, estaVigente = true)
+    
+    
+test "1.1 Un pack nacional sin beneficios vigentes devuelve el mismo precio base" { 
+    const pack1 = 
+    new PackNacional(
+      duracionViaje = 7, 
+      precioBase = 100000, 
+      coordinadorACargo = guiaMotivado, 
+      provinciaDestino = "Córdoba",
+      beneficiosEspeciales = [
+        seguroVencido]
+    )
+     assert.equals(100000, pack1.precioFinal())
+}
+
+test "1.2 Un pack nacional con 2 beneficios vigentes suma correctamante sus costos al precio base"{
+    const pack2 = 
+    new PackNacional(
+        duracionViaje = 10,
+        precioBase = 150000,
+        provinciaDestino = "Mendoza",
+        coordinadorACargo = asistenteSinExp,
+        beneficiosEspeciales = [
+            traslado,
+            salaVip
+        ]
+    )
+    assert.equals(165000, pack2.precioFinal())
+
+}
+
+test "1.3 Un packinternacional sin beneficios vigentes calcula correctamente el total con el 20% de recargo"{
+    const pack3 = 
+    new PackInternacional(
+        duracionViaje = 25,
+        precioBase = 200000,
+        paisDestino = "Brasil",
+        cantidadEscalas = 0,
+        esDeInteres = true,
+        coordinadorACargo = guiaMotivado,
+        beneficiosEspeciales = [
+            seguroVencido
+        ]
+    )
+    assert.equals(240000, pack3.precioFinal())
+}
+
+test "2.1 Un guía motivado con 21 viajes realizados es considerado altamente calificado"{
+    assert.that(guiaMotivado.estaAltamenteCalificado())
+}
+
+test "2.2 Un asistente logístico con menos de 3 años de experiencia no es calificado, aunque tenga muchos viajes."{
+    assert.notThat(asistenteSinExp.estaAltamenteCalificado())
+}
+
+test "2.3 Un acompañante con cualquier cantidad de viajes es siempre calificado si supera los 20"{
+    assert.that(acompananteExp.estaAltamenteCalificado())
+}
+
+test "3.1 Un pack nacional con duración mayor a 10 días y un coordinador altamente calificado es premium"{
+    assert.that(new PackNacional(duracionViaje = 11, precioBase = 100000, coordinadorACargo = guiaMotivado, provinciaDestino = "Córdoba").esPremium())
+}
+
+test "3.2 Un pack es internacional si es un lugar de interes, si tiene mas de 20 dias de duracion y si no tiene escalas"{
+    assert.that(new PackInternacional(duracionViaje = 21, precioBase = 100000, paisDestino = "Brasil", cantidadEscalas = 0, esDeInteres = true, coordinadorACargo = guiaMotivado).esPremium())
+}
+
+test "4 Un pack provincial es premium si tiene al menos 4 actividades, mas de 5 ciudades a visitar y al menos 3 beneficios vigentes ademas se le agrega un 5% al precio final"{
+    const pack4 = 
+    new PackProvincial(
+        duracionViaje = 15,
+        precioBase = 200000,
+        provinciaDestino = "Buenos Aires",
+        cantidadDeCiudadesAVisitar = 6,
+        coordinadorACargo = guiaMotivado,
+        beneficiosEspeciales = [
+            traslado,
+            salaVip,
+            seguroVigente
+        ]
+    )
+    pack4.agregarActividad("Visita a museos")
+    pack4.agregarActividad("Tour gastronómico")
+    pack4.agregarActividad("Excursión a la playa")
+    pack4.agregarActividad("Caminata por la ciudad")
+    
+    assert.that(pack4.esPremium())
+    assert.equals(229950, pack4.precioFinal())
+}
+
+}
